@@ -39,6 +39,14 @@ function buildAddress(parts: {
 
 // ─── Apollo Mappers ─────────────────────────────────
 
+function isRealHeadshot(url: string | null | undefined): string | undefined {
+  if (!url) return undefined;
+  // Filter out LinkedIn generic placeholder avatars
+  if (url.includes('static.licdn.com/aero-v1/sc/h/')) return undefined;
+  if (url.includes('static.licdn.com/sc/h/')) return undefined;
+  return url;
+}
+
 export function mapApolloPersonToContact(
   person: Record<string, unknown>
 ): ContactEnrichmentData {
@@ -51,7 +59,7 @@ export function mapApolloPersonToContact(
     email_status: person.email_status as string | undefined,
     title: person.title as string | undefined,
     linkedin_url: person.linkedin_url as string | undefined,
-    headshot_url: person.photo_url as string | undefined,
+    headshot_url: isRealHeadshot(person.photo_url as string | undefined),
     work_phone: workPhone?.raw_number,
     cell_phone: cellPhone?.raw_number,
     work_address: buildAddress({
@@ -161,7 +169,6 @@ export function mapPdlPersonToContact(
     work_phone: workPhone,
     cell_phone: cellPhone,
     linkedin_url: linkedinUrl,
-    headshot_url: person.profile_pic_url as string | undefined,
     bio: person.summary as string | undefined,
     work_address: workAddress,
     work_history: workHistory,
