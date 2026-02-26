@@ -9,10 +9,11 @@ type Budget = {
 };
 
 export function CreditBudgetGauge({ budgets }: { budgets: Budget[] }) {
-  const providers = ['apollo', 'pdl', 'zerobounce'] as const;
+  const providers = ['apollo', 'pdl', 'brightdata', 'zerobounce'] as const;
   const providerColors: Record<string, string> = {
     apollo: 'bg-blue-500',
     pdl: 'bg-purple-500',
+    brightdata: 'bg-orange-500',
     zerobounce: 'bg-emerald-500',
   };
 

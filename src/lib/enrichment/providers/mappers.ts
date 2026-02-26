@@ -100,6 +100,71 @@ export function mapApolloOrgToCompany(
   };
 }
 
+// ─── Bright Data Mappers ─────────────────────────────
+
+export function mapBrightDataPersonToContact(
+  person: Record<string, unknown>
+): ContactEnrichmentData {
+  const headshot = isRealHeadshot(person.avatar as string | undefined);
+
+  // Current position from experience
+  const experience = (person.experience as Array<Record<string, unknown>>) ?? [];
+  const currentJob = experience.find((e) => !e.end_date) ?? experience[0];
+  const title = (currentJob?.title as string | undefined) ?? (person.current_company_position as string | undefined);
+
+  // Work history
+  const workHistory = experience.map((exp) => ({
+    company: { name: exp.company as string | undefined },
+    title: { name: exp.title as string | undefined },
+    start_date: exp.start_date as string | undefined,
+    end_date: exp.end_date as string | undefined,
+    description: exp.description as string | undefined,
+    location: exp.location as string | undefined,
+  }));
+
+  // Education
+  const educationRaw = (person.education as Array<Record<string, unknown>>) ?? [];
+  const education = educationRaw.map((edu) => ({
+    school: { name: edu.title as string | undefined },
+    degrees: edu.degree ? [edu.degree as string] : undefined,
+    majors: edu.field_of_study ? [edu.field_of_study as string] : undefined,
+    start_date: edu.start_date as string | undefined,
+    end_date: edu.end_date as string | undefined,
+  }));
+
+  // Certifications
+  const certsRaw = (person.certifications as Array<Record<string, unknown>>) ?? [];
+  const certifications = certsRaw.map((c) => c.name as string).filter(Boolean);
+
+  // Languages
+  const langsRaw = (person.languages as Array<string | Record<string, unknown>>) ?? [];
+  const languages = langsRaw.map((l) =>
+    typeof l === 'string' ? { name: l } : { name: l.title as string | undefined, proficiency: l.proficiency as string | undefined }
+  );
+
+  // Location
+  const locationParts = [
+    person.city as string | undefined,
+    person.country_code as string | undefined,
+  ].filter(Boolean);
+  const workAddress = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+  // LinkedIn URL
+  const linkedinUrl = person.url as string | undefined;
+
+  return {
+    headshot_url: headshot,
+    title,
+    bio: person.about as string | undefined,
+    linkedin_url: linkedinUrl,
+    work_address: workAddress,
+    work_history: workHistory.length > 0 ? workHistory : undefined,
+    education: education.length > 0 ? education : undefined,
+    certifications: certifications.length > 0 ? certifications : undefined,
+    languages: languages.length > 0 ? languages : undefined,
+  };
+}
+
 // ─── PDL Mappers ────────────────────────────────────
 
 export function mapPdlPersonToContact(

@@ -63,16 +63,24 @@ export function EnrichmentTriggerButton({ entityType, entityId }: Props) {
             PDL
           </button>
           {entityType === 'contact' && (
-            <button
-              onClick={() => handleEnrich(['zerobounce'])}
-              className="w-full text-left px-3 py-2 text-sm text-emerald-400 hover:bg-slate-800 transition-colors"
-            >
-              ZeroBounce (Verify Email)
-            </button>
+            <>
+              <button
+                onClick={() => handleEnrich(['brightdata'])}
+                className="w-full text-left px-3 py-2 text-sm text-orange-400 hover:bg-slate-800 transition-colors"
+              >
+                Bright Data
+              </button>
+              <button
+                onClick={() => handleEnrich(['zerobounce'])}
+                className="w-full text-left px-3 py-2 text-sm text-emerald-400 hover:bg-slate-800 transition-colors"
+              >
+                ZeroBounce (Verify Email)
+              </button>
+            </>
           )}
           <div className="border-t border-slate-700 my-1" />
           <button
-            onClick={() => handleEnrich(entityType === 'contact' ? ['apollo', 'pdl', 'zerobounce'] : ['apollo'])}
+            onClick={() => handleEnrich(entityType === 'contact' ? ['apollo', 'pdl', 'brightdata', 'zerobounce'] : ['apollo'])}
             className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-800 transition-colors"
           >
             All Providers

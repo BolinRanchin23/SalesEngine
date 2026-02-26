@@ -42,7 +42,7 @@ export default async function EnrichmentDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Enrichment Engine</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Automated data enrichment via Apollo, PDL, and ZeroBounce
+            Automated data enrichment via Apollo, PDL, Bright Data, and ZeroBounce
           </p>
         </div>
         <BatchEnrichDialog />

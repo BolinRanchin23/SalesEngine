@@ -11,9 +11,10 @@ type ActivityItem = {
   company_id: string | null;
 };
 
-const providerVariant: Record<string, 'blue' | 'purple' | 'green' | 'default'> = {
+const providerVariant: Record<string, 'blue' | 'purple' | 'green' | 'orange' | 'default'> = {
   apollo: 'blue',
   pdl: 'purple',
+  brightdata: 'orange',
   zerobounce: 'green',
 };
 

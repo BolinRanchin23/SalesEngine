@@ -7,6 +7,7 @@ import { RateLimitError, BudgetExhaustedError } from './errors';
 import * as apollo from './providers/apollo';
 import * as pdl from './providers/pdl';
 import * as zerobounce from './providers/zerobounce';
+import * as brightdata from './providers/brightdata';
 
 const BATCH_SIZE = 10;
 const RETRY_DELAYS = [60, 300, 900]; // 1min, 5min, 15min in seconds
@@ -61,22 +62,38 @@ export async function processQueue(): Promise<{ processed: number; failed: numbe
 
 async function processItem(item: Record<string, unknown>): Promise<void> {
   const supabase = createAdminClient();
-  const provider = item.provider as Provider;
+  let provider = item.provider as Provider;
   const operation = item.operation as Operation;
   const entityType = item.entity_type as string;
   const entityId = item.entity_id as string;
 
-  // 1. Check budget
-  const estimatedCredits = 1;
-  await checkBudget(provider, estimatedCredits);
-
-  // 2. Build cache key and check
+  // 1. Fetch entity first (need LinkedIn URL to decide fallback)
   const entity = await fetchEntity(entityType, entityId);
   if (!entity) {
     await markComplete(item.id as string);
     return;
   }
 
+  // 2. Check budget — with PDL→Bright Data fallback
+  const estimatedCredits = 1;
+  try {
+    await checkBudget(provider, estimatedCredits);
+  } catch (err) {
+    if (
+      err instanceof BudgetExhaustedError &&
+      provider === 'pdl' &&
+      operation === 'enrich_person' &&
+      entity.linkedin_url
+    ) {
+      // Try Bright Data as fallback
+      await checkBudget('brightdata', estimatedCredits);
+      provider = 'brightdata';
+    } else {
+      throw err;
+    }
+  }
+
+  // 3. Build cache key and check
   const params = buildProviderParams(entity, entityType);
   const cacheKey = buildCacheKey(provider, operation, params);
   const cached = await checkCache(cacheKey);
@@ -85,10 +102,10 @@ async function processItem(item: Record<string, unknown>): Promise<void> {
   if (cached) {
     result = { provider, success: true, credits_used: 0, data: cached, cached: true };
   } else {
-    // 3. Call provider
+    // 4. Call provider
     result = await callProvider(provider, operation, params);
 
-    // 4. Log the enrichment
+    // 5. Log the enrichment
     await supabase.from('enrichment_logs').insert({
       contact_id: entityType === 'contact' ? entityId : null,
       company_id: entityType === 'company' ? entityId : null,
@@ -100,13 +117,13 @@ async function processItem(item: Record<string, unknown>): Promise<void> {
       credits_used: result.credits_used,
     });
 
-    // 5. Write cache if successful
+    // 6. Write cache if successful
     if (result.success && Object.keys(result.data).length > 0) {
       await writeCache(cacheKey, provider, operation, params, result.data);
     }
   }
 
-  // 6. Merge data and update entity
+  // 7. Merge data and update entity
   if (result.success && Object.keys(result.data).length > 0) {
     if (entityType === 'contact') {
       const merged = mergeContactData(entity, result.data as ContactEnrichmentData, provider);
@@ -133,12 +150,12 @@ async function processItem(item: Record<string, unknown>): Promise<void> {
     }
   }
 
-  // 7. Consume credits
+  // 8. Consume credits
   if (result.credits_used > 0 && !result.cached) {
     await consumeCredits(provider, result.credits_used);
   }
 
-  // 8. Mark complete
+  // 9. Mark complete
   await markComplete(item.id as string);
 }
 
@@ -270,6 +287,12 @@ async function callProvider(
         cached: false,
       };
     }
+
+    case 'brightdata':
+      if (operation === 'enrich_person') {
+        return brightdata.enrichPerson(params);
+      }
+      return { provider: 'brightdata' as const, success: false, credits_used: 0, data: {}, cached: false };
 
     default:
       throw new Error(`Unknown provider: ${provider}`);

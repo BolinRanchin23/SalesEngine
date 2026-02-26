@@ -101,6 +101,13 @@ export function BatchEnrichDialog() {
           PDL
         </button>
         <button
+          onClick={() => handleBatchEnrich('brightdata', 'enrich_person')}
+          disabled={loading}
+          className="px-3 py-1.5 bg-orange-600/20 border border-orange-500/30 text-orange-400 text-sm rounded-lg hover:bg-orange-600/30 transition-colors disabled:opacity-50"
+        >
+          Bright Data
+        </button>
+        <button
           onClick={handleVerifyEmails}
           disabled={loading}
           className="px-3 py-1.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm rounded-lg hover:bg-emerald-600/30 transition-colors disabled:opacity-50"

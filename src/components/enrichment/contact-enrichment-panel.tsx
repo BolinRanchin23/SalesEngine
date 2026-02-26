@@ -94,7 +94,7 @@ export function ContactEnrichmentPanel({
                 <span className="text-slate-400">{p.field_name.replace(/_/g, ' ')}</span>
                 <Badge
                   variant={
-                    p.provider === 'apollo' ? 'blue' : p.provider === 'pdl' ? 'purple' : 'green'
+                    p.provider === 'apollo' ? 'blue' : p.provider === 'pdl' ? 'purple' : p.provider === 'brightdata' ? 'orange' : 'green'
                   }
                 >
                   {p.provider}
@@ -116,7 +116,7 @@ export function ContactEnrichmentPanel({
               <div key={log.id} className="flex items-center gap-2 text-xs">
                 <Badge
                   variant={
-                    log.provider === 'apollo' ? 'blue' : log.provider === 'pdl' ? 'purple' : 'green'
+                    log.provider === 'apollo' ? 'blue' : log.provider === 'pdl' ? 'purple' : log.provider === 'brightdata' ? 'orange' : 'green'
                   }
                 >
                   {log.provider}

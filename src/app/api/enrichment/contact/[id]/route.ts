@@ -4,9 +4,11 @@ import { checkBudget, consumeCredits } from '@/lib/enrichment/budget';
 import { buildCacheKey, checkCache, writeCache } from '@/lib/enrichment/cache';
 import { mergeContactData, writeProvenance, determineEnrichmentStatus } from '@/lib/enrichment/merge';
 import { ContactEnrichmentData, Provider } from '@/lib/enrichment/types';
+import { BudgetExhaustedError } from '@/lib/enrichment/errors';
 import * as apollo from '@/lib/enrichment/providers/apollo';
 import * as pdl from '@/lib/enrichment/providers/pdl';
 import * as zerobounce from '@/lib/enrichment/providers/zerobounce';
+import * as brightdata from '@/lib/enrichment/providers/brightdata';
 
 const STATUS_FIELDS = [
   'email', 'title', 'linkedin_url', 'bio', 'headshot_url',
@@ -76,7 +78,11 @@ export async function POST(
 
           await writeCache(cacheKey, provider, 'verify_email', params as Record<string, unknown>, data);
         } else {
-          const enrichFn = provider === 'apollo' ? apollo.enrichPerson : pdl.enrichPerson;
+          const enrichFn = provider === 'apollo'
+            ? apollo.enrichPerson
+            : provider === 'brightdata'
+              ? brightdata.enrichPerson
+              : pdl.enrichPerson;
           const result = await enrichFn(params);
           data = result.data;
           creditsUsed = result.credits_used;
@@ -118,6 +124,76 @@ export async function POST(
 
         results.push({ provider, success: true, fields_updated: Object.keys(data) });
       } catch (err) {
+        // PDL budget exhausted → try Bright Data fallback if contact has LinkedIn URL
+        if (
+          err instanceof BudgetExhaustedError &&
+          provider === 'pdl' &&
+          c.linkedin_url
+        ) {
+          try {
+            await checkBudget('brightdata', 1);
+            const bdParams = {
+              first_name: c.first_name as string,
+              last_name: c.last_name as string,
+              linkedin_url: c.linkedin_url as string,
+            };
+            const bdOperation = 'enrich_person' as const;
+            const bdCacheKey = buildCacheKey('brightdata', bdOperation, bdParams as Record<string, unknown>);
+            const bdCached = await checkCache(bdCacheKey);
+
+            let bdData: Record<string, unknown>;
+            let bdCredits = 0;
+
+            if (bdCached) {
+              bdData = bdCached;
+            } else {
+              const bdResult = await brightdata.enrichPerson(bdParams);
+              bdData = bdResult.data;
+              bdCredits = bdResult.credits_used;
+              if (bdResult.success) {
+                await writeCache(bdCacheKey, 'brightdata', bdOperation, bdParams as Record<string, unknown>, bdData);
+              }
+            }
+
+            await supabase.from('enrichment_logs').insert({
+              contact_id: id,
+              provider: 'brightdata',
+              request_type: bdOperation,
+              request_payload: bdParams as Record<string, unknown>,
+              response_payload: bdData,
+              status: 'success',
+              credits_used: bdCredits,
+            });
+
+            if (Object.keys(bdData).length > 0) {
+              const merged = mergeContactData(c, bdData as ContactEnrichmentData, 'brightdata');
+              if (Object.keys(merged).length > 0) {
+                const updated = { ...c, ...merged };
+                const enrichmentStatus = determineEnrichmentStatus(updated, STATUS_FIELDS);
+                await supabase
+                  .from('contacts')
+                  .update({ ...merged, enrichment_status: enrichmentStatus, last_enriched_at: new Date().toISOString() })
+                  .eq('id', id);
+              }
+              await writeProvenance('contact', id, 'brightdata', bdData);
+            }
+
+            if (bdCredits > 0) {
+              await consumeCredits('brightdata', bdCredits);
+            }
+
+            results.push({
+              provider: 'brightdata' as Provider,
+              success: true,
+              fields_updated: Object.keys(bdData),
+              fallback_from: 'pdl',
+            });
+            continue;
+          } catch {
+            // Bright Data fallback also failed — report original PDL error
+          }
+        }
+
         results.push({
           provider,
           success: false,

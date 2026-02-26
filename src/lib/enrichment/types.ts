@@ -1,5 +1,5 @@
 export type EntityType = 'contact' | 'company';
-export type Provider = 'apollo' | 'pdl' | 'zerobounce';
+export type Provider = 'apollo' | 'pdl' | 'zerobounce' | 'brightdata';
 export type Operation = 'enrich_person' | 'enrich_company' | 'verify_email' | 'find_email';
 export type QueueStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
