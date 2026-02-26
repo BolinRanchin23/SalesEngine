@@ -13,7 +13,7 @@ type ActivityItem = {
 
 const providerVariant: Record<string, 'blue' | 'purple' | 'green' | 'default'> = {
   apollo: 'blue',
-  proxycurl: 'purple',
+  pdl: 'purple',
   zerobounce: 'green',
 };
 

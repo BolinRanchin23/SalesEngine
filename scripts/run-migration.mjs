@@ -19,7 +19,7 @@ async function main() {
   console.log("Connected to Supabase database");
 
   const sql = readFileSync(
-    resolve(__dirname, "../supabase/migrations/002_enrichment_engine.sql"),
+    resolve(__dirname, "../supabase/migrations/003_replace_proxycurl_with_pdl.sql"),
     "utf8"
   );
 

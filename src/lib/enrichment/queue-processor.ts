@@ -5,7 +5,7 @@ import { buildCacheKey, checkCache, writeCache } from './cache';
 import { mergeContactData, mergeCompanyData, writeProvenance, determineEnrichmentStatus } from './merge';
 import { RateLimitError, BudgetExhaustedError } from './errors';
 import * as apollo from './providers/apollo';
-import * as proxycurl from './providers/proxycurl';
+import * as pdl from './providers/pdl';
 import * as zerobounce from './providers/zerobounce';
 
 const BATCH_SIZE = 10;
@@ -67,7 +67,7 @@ async function processItem(item: Record<string, unknown>): Promise<void> {
   const entityId = item.entity_id as string;
 
   // 1. Check budget
-  const estimatedCredits = operation === 'enrich_person' && provider === 'proxycurl' ? 3 : 1;
+  const estimatedCredits = 1;
   await checkBudget(provider, estimatedCredits);
 
   // 2. Build cache key and check
@@ -249,11 +249,12 @@ async function callProvider(
       }
       return apollo.enrichCompany(params);
 
-    case 'proxycurl':
+    case 'pdl':
       if (operation === 'enrich_person') {
-        return proxycurl.enrichPerson(params);
+        return pdl.enrichPerson(params);
       }
-      return proxycurl.enrichCompany(params);
+      // PDL has no company enrichment
+      return { provider: 'pdl' as const, success: false, credits_used: 0, data: {}, cached: false };
 
     case 'zerobounce': {
       const email = params.email as string;

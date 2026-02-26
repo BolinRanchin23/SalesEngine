@@ -57,10 +57,10 @@ export function EnrichmentTriggerButton({ entityType, entityId }: Props) {
             Apollo
           </button>
           <button
-            onClick={() => handleEnrich(['proxycurl'])}
+            onClick={() => handleEnrich(['pdl'])}
             className="w-full text-left px-3 py-2 text-sm text-purple-400 hover:bg-slate-800 transition-colors"
           >
-            ProxyCurl
+            PDL
           </button>
           {entityType === 'contact' && (
             <button
@@ -72,7 +72,7 @@ export function EnrichmentTriggerButton({ entityType, entityId }: Props) {
           )}
           <div className="border-t border-slate-700 my-1" />
           <button
-            onClick={() => handleEnrich(entityType === 'contact' ? ['apollo', 'proxycurl', 'zerobounce'] : ['apollo', 'proxycurl'])}
+            onClick={() => handleEnrich(entityType === 'contact' ? ['apollo', 'pdl', 'zerobounce'] : ['apollo'])}
             className="w-full text-left px-3 py-2 text-sm text-white hover:bg-slate-800 transition-colors"
           >
             All Providers

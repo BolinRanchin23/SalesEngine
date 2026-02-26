@@ -5,7 +5,6 @@ import { buildCacheKey, checkCache, writeCache } from '@/lib/enrichment/cache';
 import { mergeCompanyData, writeProvenance, determineEnrichmentStatus } from '@/lib/enrichment/merge';
 import { CompanyEnrichmentData, Provider } from '@/lib/enrichment/types';
 import * as apollo from '@/lib/enrichment/providers/apollo';
-import * as proxycurl from '@/lib/enrichment/providers/proxycurl';
 
 const STATUS_FIELDS = [
   'industry', 'website', 'phone', 'linkedin_url', 'description',
@@ -36,7 +35,7 @@ export async function POST(
     const results = [];
 
     for (const provider of providers) {
-      if (provider === 'zerobounce') continue; // ZeroBounce is email-only
+      if (provider !== 'apollo') continue; // Only Apollo supports company enrichment
 
       try {
         await checkBudget(provider, 1);
@@ -56,7 +55,7 @@ export async function POST(
         if (cached) {
           data = cached;
         } else {
-          const enrichFn = provider === 'apollo' ? apollo.enrichCompany : proxycurl.enrichCompany;
+          const enrichFn = apollo.enrichCompany;
           const result = await enrichFn(enrichParams);
           data = result.data;
           creditsUsed = result.credits_used;

@@ -92,64 +92,85 @@ export function mapApolloOrgToCompany(
   };
 }
 
-// ─── ProxyCurl Mappers ──────────────────────────────
+// ─── PDL Mappers ────────────────────────────────────
 
-export function mapProxyCurlPersonToContact(
-  profile: Record<string, unknown>
+export function mapPdlPersonToContact(
+  person: Record<string, unknown>
 ): ContactEnrichmentData {
-  // Get current title from experiences
-  const experiences = (profile.experiences as Array<Record<string, unknown>>) ?? [];
-  const current = experiences.find((e) => e.ends_at == null);
-  const title = current?.title as string | undefined;
+  // Title from job_title field
+  const title = person.job_title as string | undefined;
 
-  const personalEmails = (profile.personal_emails as string[]) ?? [];
-  const personalNumbers = (profile.personal_numbers as string[]) ?? [];
+  // Email: first from emails array
+  const emails = (person.emails as Array<{ address: string; type?: string }>) ?? [];
+  const email = emails[0]?.address;
 
-  const linkedinUrl = profile.public_identifier
-    ? `https://www.linkedin.com/in/${profile.public_identifier}`
-    : undefined;
+  // Phone numbers
+  const phoneNumbers = (person.phone_numbers as Array<{ number: string; type?: string }>) ?? [];
+  const workPhone = phoneNumbers.find((p) => p.type === 'work')?.number;
+  const cellPhone = phoneNumbers.find((p) => p.type === 'mobile' || p.type === 'personal')?.number ?? phoneNumbers[0]?.number;
+
+  // LinkedIn URL
+  const linkedinUrl = person.linkedin_url as string | undefined;
+
+  // Work history from experience[]
+  const experience = (person.experience as Array<Record<string, unknown>>) ?? [];
+  const workHistory = experience.map((exp) => ({
+    company: exp.company as Record<string, unknown> | undefined,
+    title: exp.title as Record<string, unknown> | undefined,
+    start_date: exp.start_date as string | undefined,
+    end_date: exp.end_date as string | undefined,
+    is_primary: exp.is_primary as boolean | undefined,
+    summary: exp.summary as string | undefined,
+  }));
+
+  // Education
+  const educationRaw = (person.education as Array<Record<string, unknown>>) ?? [];
+  const education = educationRaw.map((edu) => ({
+    school: edu.school as Record<string, unknown> | undefined,
+    degrees: edu.degrees as string[] | undefined,
+    majors: edu.majors as string[] | undefined,
+    start_date: edu.start_date as string | undefined,
+    end_date: edu.end_date as string | undefined,
+  }));
+
+  // Skills
+  const skills = (person.skills as string[]) ?? [];
+
+  // Certifications
+  const certifications = (person.certifications as string[]) ?? [];
+
+  // Languages
+  const languagesRaw = (person.languages as Array<Record<string, unknown>>) ?? [];
+  const languages = languagesRaw.length > 0 ? languagesRaw : [];
+
+  // Location → work_address
+  const locationParts = [
+    person.location_locality as string | undefined,
+    person.location_region as string | undefined,
+    person.location_country as string | undefined,
+  ].filter(Boolean);
+  const workAddress = locationParts.length > 0 ? locationParts.join(', ') : undefined;
+
+  // Seniority & department
+  const seniority = person.job_title_role as string | undefined;
+  const department = person.job_company_industry as string | undefined;
 
   return {
     title,
-    bio: profile.summary as string | undefined,
-    headshot_url: profile.profile_pic_url as string | undefined,
+    email,
+    work_phone: workPhone,
+    cell_phone: cellPhone,
     linkedin_url: linkedinUrl,
-    email: personalEmails[0],
-    cell_phone: personalNumbers[0],
-    work_address: buildAddress({
-      city: profile.city as string | undefined,
-      state: profile.state as string | undefined,
-      country: profile.country_full_name as string | undefined,
-    }),
-  };
-}
-
-export function mapProxyCurlCompanyToCompany(
-  company: Record<string, unknown>
-): CompanyEnrichmentData {
-  const hq = company.hq as Record<string, unknown> | null;
-  const companySize = company.company_size as [number, number] | null;
-  const midpoint = companySize ? Math.round((companySize[0] + companySize[1]) / 2) : null;
-
-  return {
-    name: company.name as string | undefined,
-    industry: company.industry as string | undefined,
-    website: company.website as string | undefined,
-    description: company.description as string | undefined,
-    linkedin_url: company.universal_name_id
-      ? `https://www.linkedin.com/company/${company.universal_name_id}`
-      : undefined,
-    hq_address: hq
-      ? buildAddress({
-          street: hq.line_1 as string | undefined,
-          city: hq.city as string | undefined,
-          state: hq.state as string | undefined,
-          postal_code: hq.postal_code as string | undefined,
-          country: hq.country as string | undefined,
-        })
-      : undefined,
-    employee_count_range: categorizeEmployeeCount(midpoint),
-    founded_year: company.founded_year as number | undefined,
-    logo_url: company.profile_pic_url as string | undefined,
+    headshot_url: person.profile_pic_url as string | undefined,
+    bio: person.summary as string | undefined,
+    work_address: workAddress,
+    work_history: workHistory,
+    education,
+    skills: skills.length > 0 ? skills : undefined,
+    certifications: certifications.length > 0 ? certifications : undefined,
+    languages: languages.length > 0 ? languages : undefined,
+    seniority,
+    department,
+    pdl_id: person.id as string | undefined,
   };
 }

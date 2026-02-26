@@ -1,5 +1,5 @@
 export type EntityType = 'contact' | 'company';
-export type Provider = 'apollo' | 'proxycurl' | 'zerobounce';
+export type Provider = 'apollo' | 'pdl' | 'zerobounce';
 export type Operation = 'enrich_person' | 'enrich_company' | 'verify_email' | 'find_email';
 export type QueueStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -36,6 +36,14 @@ export interface ContactEnrichmentData {
   work_phone?: string;
   cell_phone?: string;
   work_address?: string;
+  work_history?: Record<string, unknown>[];
+  education?: Record<string, unknown>[];
+  skills?: string[];
+  certifications?: string[];
+  languages?: Record<string, unknown>[];
+  seniority?: string;
+  department?: string;
+  pdl_id?: string;
 }
 
 export interface CompanyEnrichmentData {

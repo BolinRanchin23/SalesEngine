@@ -94,11 +94,11 @@ export function BatchEnrichDialog() {
           Apollo
         </button>
         <button
-          onClick={() => handleBatchEnrich('proxycurl', 'enrich_person')}
+          onClick={() => handleBatchEnrich('pdl', 'enrich_person')}
           disabled={loading}
           className="px-3 py-1.5 bg-purple-600/20 border border-purple-500/30 text-purple-400 text-sm rounded-lg hover:bg-purple-600/30 transition-colors disabled:opacity-50"
         >
-          ProxyCurl
+          PDL
         </button>
         <button
           onClick={handleVerifyEmails}

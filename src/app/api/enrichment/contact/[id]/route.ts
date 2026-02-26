@@ -5,7 +5,7 @@ import { buildCacheKey, checkCache, writeCache } from '@/lib/enrichment/cache';
 import { mergeContactData, writeProvenance, determineEnrichmentStatus } from '@/lib/enrichment/merge';
 import { ContactEnrichmentData, Provider } from '@/lib/enrichment/types';
 import * as apollo from '@/lib/enrichment/providers/apollo';
-import * as proxycurl from '@/lib/enrichment/providers/proxycurl';
+import * as pdl from '@/lib/enrichment/providers/pdl';
 import * as zerobounce from '@/lib/enrichment/providers/zerobounce';
 
 const STATUS_FIELDS = [
@@ -39,7 +39,7 @@ export async function POST(
 
     for (const provider of providers) {
       try {
-        await checkBudget(provider, provider === 'proxycurl' ? 3 : 1);
+        await checkBudget(provider, 1);
 
         const params = {
           first_name: c.first_name as string,
@@ -76,7 +76,7 @@ export async function POST(
 
           await writeCache(cacheKey, provider, 'verify_email', params as Record<string, unknown>, data);
         } else {
-          const enrichFn = provider === 'apollo' ? apollo.enrichPerson : proxycurl.enrichPerson;
+          const enrichFn = provider === 'apollo' ? apollo.enrichPerson : pdl.enrichPerson;
           const result = await enrichFn(params);
           data = result.data;
           creditsUsed = result.credits_used;
