@@ -279,7 +279,7 @@ export function mapPdlPersonToContact(
   const title = person.job_title as string | undefined;
 
   // Email: first from emails array
-  const emails = (person.emails as Array<{ address: string; type?: string }>) ?? [];
+  const emails = Array.isArray(person.emails) ? (person.emails as Array<{ address: string; type?: string }>) : [];
   const email = emails[0]?.address;
 
   // Personal emails (non-work)
@@ -289,7 +289,7 @@ export function mapPdlPersonToContact(
     .filter(Boolean);
 
   // Phone numbers
-  const phoneNumbers = (person.phone_numbers as Array<{ number: string; type?: string }>) ?? [];
+  const phoneNumbers = Array.isArray(person.phone_numbers) ? (person.phone_numbers as Array<{ number: string; type?: string }>) : [];
   const workPhone = phoneNumbers.find((p) => p.type === 'work')?.number;
   const cellPhone = phoneNumbers.find((p) => p.type === 'mobile' || p.type === 'personal')?.number ?? phoneNumbers[0]?.number;
 
@@ -297,7 +297,7 @@ export function mapPdlPersonToContact(
   const linkedinUrl = person.linkedin_url as string | undefined;
 
   // Work history from experience[]
-  const experience = (person.experience as Array<Record<string, unknown>>) ?? [];
+  const experience = Array.isArray(person.experience) ? (person.experience as Array<Record<string, unknown>>) : [];
   const workHistory = experience.map((exp) => ({
     company: exp.company as Record<string, unknown> | undefined,
     title: exp.title as Record<string, unknown> | undefined,
@@ -308,7 +308,7 @@ export function mapPdlPersonToContact(
   }));
 
   // Education
-  const educationRaw = (person.education as Array<Record<string, unknown>>) ?? [];
+  const educationRaw = Array.isArray(person.education) ? (person.education as Array<Record<string, unknown>>) : [];
   const education = educationRaw.map((edu) => ({
     school: edu.school as Record<string, unknown> | undefined,
     degrees: edu.degrees as string[] | undefined,
@@ -318,13 +318,13 @@ export function mapPdlPersonToContact(
   }));
 
   // Skills
-  const skills = (person.skills as string[]) ?? [];
+  const skills = Array.isArray(person.skills) ? (person.skills as string[]) : [];
 
   // Certifications
-  const certifications = (person.certifications as string[]) ?? [];
+  const certifications = Array.isArray(person.certifications) ? (person.certifications as string[]) : [];
 
   // Languages
-  const languagesRaw = (person.languages as Array<Record<string, unknown>>) ?? [];
+  const languagesRaw = Array.isArray(person.languages) ? (person.languages as Array<Record<string, unknown>>) : [];
   const languages = languagesRaw.length > 0 ? languagesRaw : [];
 
   // Location → work_address
@@ -346,7 +346,7 @@ export function mapPdlPersonToContact(
   if (person.github_url) socialProfiles.github_url = person.github_url as string;
 
   // Interests
-  const interests = (person.interests as string[]) ?? [];
+  const interests = Array.isArray(person.interests) ? (person.interests as string[]) : [];
 
   // Inferred salary & years experience
   const inferredSalary = person.inferred_salary as string | undefined;

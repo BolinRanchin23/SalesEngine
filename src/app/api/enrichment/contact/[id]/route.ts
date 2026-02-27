@@ -71,7 +71,7 @@ export async function POST(
           email: c.email as string | undefined,
           linkedin_url: c.linkedin_url as string | undefined,
           company_name: company?.name as string | undefined,
-          domain: company?.website ? new URL(company.website as string).hostname : undefined,
+          domain: company?.website ? (() => { try { return new URL(company.website as string).hostname; } catch { return undefined; } })() : undefined,
         };
 
         const operation = provider === 'zerobounce'
