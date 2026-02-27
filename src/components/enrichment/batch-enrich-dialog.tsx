@@ -114,6 +114,13 @@ export function BatchEnrichDialog() {
         >
           ZeroBounce (Verify)
         </button>
+        <button
+          onClick={() => handleBatchEnrich('websearch', 'web_search')}
+          disabled={loading}
+          className="px-3 py-1.5 bg-cyan-600/20 border border-cyan-500/30 text-cyan-400 text-sm rounded-lg hover:bg-cyan-600/30 transition-colors disabled:opacity-50"
+        >
+          Web Search
+        </button>
       </div>
       {loading && <p className="text-sm text-slate-500 mt-3">Processing...</p>}
       {result && <p className="text-sm text-slate-400 mt-3">{result}</p>}

@@ -40,6 +40,8 @@ export default function RootLayout({
                   <NavLink href="/dashboard">Dashboard</NavLink>
                   <NavLink href="/companies">Companies</NavLink>
                   <NavLink href="/pipeline">Pipeline</NavLink>
+                  <NavLink href="/opportunities">Opportunities</NavLink>
+                  <NavLink href="/touch-points">Touch Points</NavLink>
                   <NavLink href="/enrichment">Enrichment</NavLink>
                 </div>
               </div>

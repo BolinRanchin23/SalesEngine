@@ -19,7 +19,7 @@ async function main() {
   console.log("Connected to Supabase database");
 
   const sql = readFileSync(
-    resolve(__dirname, "../supabase/migrations/004_add_brightdata_provider.sql"),
+    resolve(__dirname, "../supabase/migrations/005_salesengine_expansion.sql"),
     "utf8"
   );
 

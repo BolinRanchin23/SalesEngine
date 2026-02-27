@@ -41,7 +41,6 @@ function buildAddress(parts: {
 
 function isRealHeadshot(url: string | null | undefined): string | undefined {
   if (!url) return undefined;
-  // Filter out LinkedIn generic placeholder avatars
   if (url.includes('static.licdn.com/aero-v1/sc/h/')) return undefined;
   if (url.includes('static.licdn.com/sc/h/')) return undefined;
   return url;
@@ -54,10 +53,36 @@ export function mapApolloPersonToContact(
   const workPhone = phones.find((p) => p.type === 'work_direct' || p.type === 'work_hq');
   const cellPhone = phones.find((p) => p.type === 'mobile');
 
+  // Social profiles
+  const socialProfiles: Record<string, string> = {};
+  if (person.twitter_url) socialProfiles.twitter_url = person.twitter_url as string;
+  if (person.facebook_url) socialProfiles.facebook_url = person.facebook_url as string;
+  if (person.github_url) socialProfiles.github_url = person.github_url as string;
+
+  // Employment history → work_history
+  const employmentHistory = (person.employment_history as Array<Record<string, unknown>>) ?? [];
+  const workHistory = employmentHistory.length > 0
+    ? employmentHistory.map((exp) => ({
+        company: { name: exp.organization_name as string | undefined },
+        title: { name: exp.title as string | undefined },
+        start_date: exp.start_date as string | undefined,
+        end_date: exp.end_date as string | undefined,
+        is_primary: exp.current as boolean | undefined,
+      }))
+    : undefined;
+
+  // Personal emails
+  const personalEmails: string[] = [];
+  if (person.personal_emails && Array.isArray(person.personal_emails)) {
+    personalEmails.push(...(person.personal_emails as string[]));
+  }
+
   return {
     email: person.email as string | undefined,
     email_status: person.email_status as string | undefined,
     title: person.title as string | undefined,
+    headline: person.headline as string | undefined,
+    seniority: person.seniority as string | undefined,
     linkedin_url: person.linkedin_url as string | undefined,
     headshot_url: isRealHeadshot(person.photo_url as string | undefined),
     work_phone: workPhone?.raw_number,
@@ -67,6 +92,9 @@ export function mapApolloPersonToContact(
       state: person.state as string | undefined,
       country: person.country as string | undefined,
     }),
+    social_profiles: Object.keys(socialProfiles).length > 0 ? socialProfiles : undefined,
+    work_history: workHistory,
+    personal_emails: personalEmails.length > 0 ? personalEmails : undefined,
   };
 }
 
@@ -152,9 +180,78 @@ export function mapBrightDataPersonToContact(
   // LinkedIn URL
   const linkedinUrl = person.url as string | undefined;
 
+  // Skills
+  const skillsRaw = (person.skills as Array<string | Record<string, unknown>>) ?? [];
+  const skills = skillsRaw.map((s) => typeof s === 'string' ? s : (s.name as string)).filter(Boolean);
+
+  // Headline
+  const headline = person.headline as string | undefined;
+
+  // Followers / Connections
+  const followers = person.followers_count as number | undefined;
+  const connections = person.connections_count as number | undefined;
+
+  // Recommendations
+  const recommendationsRaw = (person.recommendations as Array<Record<string, unknown>>) ?? [];
+  const recommendations = recommendationsRaw.map((r) => ({
+    author: r.author as string | undefined,
+    text: r.text as string | undefined,
+    relationship: r.relationship as string | undefined,
+  }));
+
+  // Volunteer Experience
+  const volunteerRaw = (person.volunteer_experience as Array<Record<string, unknown>>) ?? [];
+  const volunteerExperience = volunteerRaw.map((v) => ({
+    organization: v.organization as string | undefined,
+    role: v.role as string | undefined,
+    cause: v.cause as string | undefined,
+    start_date: v.start_date as string | undefined,
+    end_date: v.end_date as string | undefined,
+    description: v.description as string | undefined,
+  }));
+
+  // Publications
+  const pubsRaw = (person.publications as Array<Record<string, unknown>>) ?? [];
+  const publications = pubsRaw.map((p) => ({
+    title: p.title as string | undefined,
+    publisher: p.publisher as string | undefined,
+    url: p.url as string | undefined,
+    date: p.date as string | undefined,
+    description: p.description as string | undefined,
+  }));
+
+  // Honors and Awards (from patents + honors_and_awards)
+  const patentsRaw = (person.patents as Array<Record<string, unknown>>) ?? [];
+  const honorsRaw = (person.honors_and_awards as Array<Record<string, unknown>>) ?? [];
+  const honorsAndAwards = [
+    ...honorsRaw.map((h) => ({
+      title: h.title as string | undefined,
+      issuer: h.issuer as string | undefined,
+      date: h.date as string | undefined,
+      description: h.description as string | undefined,
+    })),
+    ...patentsRaw.map((p) => ({
+      title: p.title as string | undefined,
+      issuer: 'Patent',
+      date: p.date as string | undefined,
+      description: p.description as string | undefined,
+    })),
+  ];
+
+  // Projects
+  const projectsRaw = (person.projects as Array<Record<string, unknown>>) ?? [];
+  const projects = projectsRaw.map((p) => ({
+    title: p.title as string | undefined,
+    url: p.url as string | undefined,
+    start_date: p.start_date as string | undefined,
+    end_date: p.end_date as string | undefined,
+    description: p.description as string | undefined,
+  }));
+
   return {
     headshot_url: headshot,
     title,
+    headline,
     bio: person.about as string | undefined,
     linkedin_url: linkedinUrl,
     work_address: workAddress,
@@ -162,6 +259,14 @@ export function mapBrightDataPersonToContact(
     education: education.length > 0 ? education : undefined,
     certifications: certifications.length > 0 ? certifications : undefined,
     languages: languages.length > 0 ? languages : undefined,
+    skills: skills.length > 0 ? skills : undefined,
+    followers: followers ?? undefined,
+    connections: connections ?? undefined,
+    recommendations: recommendations.length > 0 ? recommendations : undefined,
+    volunteer_experience: volunteerExperience.length > 0 ? volunteerExperience : undefined,
+    publications: publications.length > 0 ? publications : undefined,
+    honors_and_awards: honorsAndAwards.length > 0 ? honorsAndAwards : undefined,
+    projects: projects.length > 0 ? projects : undefined,
   };
 }
 
@@ -176,6 +281,12 @@ export function mapPdlPersonToContact(
   // Email: first from emails array
   const emails = (person.emails as Array<{ address: string; type?: string }>) ?? [];
   const email = emails[0]?.address;
+
+  // Personal emails (non-work)
+  const personalEmails = emails
+    .filter((e) => e.type === 'personal' || e.type === 'current_personal')
+    .map((e) => e.address)
+    .filter(Boolean);
 
   // Phone numbers
   const phoneNumbers = (person.phone_numbers as Array<{ number: string; type?: string }>) ?? [];
@@ -228,8 +339,25 @@ export function mapPdlPersonToContact(
   const seniority = person.job_title_role as string | undefined;
   const department = person.job_company_industry as string | undefined;
 
+  // Social profiles
+  const socialProfiles: Record<string, string> = {};
+  if (person.twitter_url) socialProfiles.twitter_url = person.twitter_url as string;
+  if (person.facebook_url) socialProfiles.facebook_url = person.facebook_url as string;
+  if (person.github_url) socialProfiles.github_url = person.github_url as string;
+
+  // Interests
+  const interests = (person.interests as string[]) ?? [];
+
+  // Inferred salary & years experience
+  const inferredSalary = person.inferred_salary as string | undefined;
+  const inferredYearsExperience = person.inferred_years_experience as number | undefined;
+
+  // Headline
+  const headline = person.headline as string | undefined;
+
   return {
     title,
+    headline,
     email,
     work_phone: workPhone,
     cell_phone: cellPhone,
@@ -244,5 +372,10 @@ export function mapPdlPersonToContact(
     seniority,
     department,
     pdl_id: person.id as string | undefined,
+    social_profiles: Object.keys(socialProfiles).length > 0 ? socialProfiles : undefined,
+    personal_emails: personalEmails.length > 0 ? personalEmails : undefined,
+    interests: interests.length > 0 ? interests : undefined,
+    inferred_salary: inferredSalary,
+    inferred_years_experience: inferredYearsExperience,
   };
 }

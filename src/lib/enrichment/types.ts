@@ -1,7 +1,8 @@
 export type EntityType = 'contact' | 'company';
-export type Provider = 'apollo' | 'pdl' | 'zerobounce' | 'brightdata';
-export type Operation = 'enrich_person' | 'enrich_company' | 'verify_email' | 'find_email';
+export type Provider = 'apollo' | 'pdl' | 'zerobounce' | 'brightdata' | 'websearch';
+export type Operation = 'enrich_person' | 'enrich_company' | 'verify_email' | 'find_email' | 'web_search';
 export type QueueStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type EnrichmentDepth = 'quick' | 'standard' | 'deep';
 
 export interface PersonEnrichParams {
   first_name?: string;
@@ -26,10 +27,19 @@ export interface EnrichmentResult {
   cached: boolean;
 }
 
+export interface WebResearchItem {
+  title: string;
+  url: string;
+  snippet: string;
+  category: 'article' | 'press_release' | 'board_membership' | 'community' | 'award' | 'publication' | 'other';
+  found_at: string;
+}
+
 export interface ContactEnrichmentData {
   email?: string;
   email_status?: string;
   title?: string;
+  headline?: string;
   linkedin_url?: string;
   headshot_url?: string;
   bio?: string;
@@ -44,6 +54,19 @@ export interface ContactEnrichmentData {
   seniority?: string;
   department?: string;
   pdl_id?: string;
+  social_profiles?: Record<string, string>;
+  personal_emails?: string[];
+  interests?: string[];
+  inferred_salary?: string;
+  inferred_years_experience?: number;
+  followers?: number;
+  connections?: number;
+  recommendations?: Record<string, unknown>[];
+  volunteer_experience?: Record<string, unknown>[];
+  publications?: Record<string, unknown>[];
+  honors_and_awards?: Record<string, unknown>[];
+  projects?: Record<string, unknown>[];
+  web_research?: WebResearchItem[];
 }
 
 export interface CompanyEnrichmentData {

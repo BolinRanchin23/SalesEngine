@@ -115,6 +115,21 @@ export type Database = {
           seniority: string | null;
           department: string | null;
           pdl_id: string | null;
+          social_profiles: Record<string, string> | null;
+          headline: string | null;
+          personal_emails: string[] | null;
+          interests: string[] | null;
+          inferred_salary: string | null;
+          inferred_years_experience: number | null;
+          followers: number | null;
+          connections: number | null;
+          recommendations: Record<string, unknown>[] | null;
+          volunteer_experience: Record<string, unknown>[] | null;
+          publications: Record<string, unknown>[] | null;
+          honors_and_awards: Record<string, unknown>[] | null;
+          projects: Record<string, unknown>[] | null;
+          web_research: Record<string, unknown>[] | null;
+          enrichment_depth: string;
           created_at: string;
           updated_at: string;
         };
@@ -153,6 +168,21 @@ export type Database = {
           seniority?: string | null;
           department?: string | null;
           pdl_id?: string | null;
+          social_profiles?: Record<string, string> | null;
+          headline?: string | null;
+          personal_emails?: string[] | null;
+          interests?: string[] | null;
+          inferred_salary?: string | null;
+          inferred_years_experience?: number | null;
+          followers?: number | null;
+          connections?: number | null;
+          recommendations?: Record<string, unknown>[] | null;
+          volunteer_experience?: Record<string, unknown>[] | null;
+          publications?: Record<string, unknown>[] | null;
+          honors_and_awards?: Record<string, unknown>[] | null;
+          projects?: Record<string, unknown>[] | null;
+          web_research?: Record<string, unknown>[] | null;
+          enrichment_depth?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -191,6 +221,21 @@ export type Database = {
           seniority?: string | null;
           department?: string | null;
           pdl_id?: string | null;
+          social_profiles?: Record<string, string> | null;
+          headline?: string | null;
+          personal_emails?: string[] | null;
+          interests?: string[] | null;
+          inferred_salary?: string | null;
+          inferred_years_experience?: number | null;
+          followers?: number | null;
+          connections?: number | null;
+          recommendations?: Record<string, unknown>[] | null;
+          volunteer_experience?: Record<string, unknown>[] | null;
+          publications?: Record<string, unknown>[] | null;
+          honors_and_awards?: Record<string, unknown>[] | null;
+          projects?: Record<string, unknown>[] | null;
+          web_research?: Record<string, unknown>[] | null;
+          enrichment_depth?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -822,6 +867,482 @@ export type Database = {
         };
         Relationships: [];
       };
+      opportunity_stages: {
+        Row: {
+          id: string;
+          name: string;
+          position: number;
+          color: string | null;
+          description: string | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          position: number;
+          color?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          position?: number;
+          color?: string | null;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      opportunities: {
+        Row: {
+          id: string;
+          name: string;
+          property_id: string | null;
+          company_id: string | null;
+          primary_contact_id: string | null;
+          stage_id: string;
+          estimated_cleanable_sqft: string | null;
+          possible_cleanable_sqft: string | null;
+          estimated_value: number | null;
+          close_date: string | null;
+          next_steps: string | null;
+          notes: string | null;
+          probability: number;
+          lost_reason: string | null;
+          won_date: string | null;
+          lost_date: string | null;
+          source: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          property_id?: string | null;
+          company_id?: string | null;
+          primary_contact_id?: string | null;
+          stage_id: string;
+          estimated_cleanable_sqft?: string | null;
+          possible_cleanable_sqft?: string | null;
+          estimated_value?: number | null;
+          close_date?: string | null;
+          next_steps?: string | null;
+          notes?: string | null;
+          probability?: number;
+          lost_reason?: string | null;
+          won_date?: string | null;
+          lost_date?: string | null;
+          source?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          property_id?: string | null;
+          company_id?: string | null;
+          primary_contact_id?: string | null;
+          stage_id?: string;
+          estimated_cleanable_sqft?: string | null;
+          possible_cleanable_sqft?: string | null;
+          estimated_value?: number | null;
+          close_date?: string | null;
+          next_steps?: string | null;
+          notes?: string | null;
+          probability?: number;
+          lost_reason?: string | null;
+          won_date?: string | null;
+          lost_date?: string | null;
+          source?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_primary_contact_id_fkey";
+            columns: ["primary_contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunities_stage_id_fkey";
+            columns: ["stage_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunity_stages";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      opportunity_contacts: {
+        Row: {
+          id: string;
+          opportunity_id: string;
+          contact_id: string;
+          role: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          opportunity_id: string;
+          contact_id: string;
+          role?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          opportunity_id?: string;
+          contact_id?: string;
+          role?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_contacts_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "opportunity_contacts_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      opportunity_activities: {
+        Row: {
+          id: string;
+          opportunity_id: string;
+          type: string;
+          description: string | null;
+          old_stage_id: string | null;
+          new_stage_id: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          opportunity_id: string;
+          type: string;
+          description?: string | null;
+          old_stage_id?: string | null;
+          new_stage_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          opportunity_id?: string;
+          type?: string;
+          description?: string | null;
+          old_stage_id?: string | null;
+          new_stage_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_activities_opportunity_id_fkey";
+            columns: ["opportunity_id"];
+            isOneToOne: false;
+            referencedRelation: "opportunities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      property_tenants: {
+        Row: {
+          id: string;
+          property_id: string;
+          company_id: string;
+          floor_suite: string | null;
+          occupied_sqft: string | null;
+          lease_start: string | null;
+          lease_end: string | null;
+          is_primary_tenant: boolean;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          company_id: string;
+          floor_suite?: string | null;
+          occupied_sqft?: string | null;
+          lease_start?: string | null;
+          lease_end?: string | null;
+          is_primary_tenant?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          property_id?: string;
+          company_id?: string;
+          floor_suite?: string | null;
+          occupied_sqft?: string | null;
+          lease_start?: string | null;
+          lease_end?: string | null;
+          is_primary_tenant?: boolean;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "property_tenants_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "property_tenants_company_id_fkey";
+            columns: ["company_id"];
+            isOneToOne: false;
+            referencedRelation: "companies";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      touch_point_programs: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          is_active: boolean;
+          is_cycling: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          is_active?: boolean;
+          is_cycling?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string | null;
+          is_active?: boolean;
+          is_cycling?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      program_steps: {
+        Row: {
+          id: string;
+          program_id: string;
+          position: number;
+          activity_type: string;
+          delay_days: number;
+          label: string | null;
+        };
+        Insert: {
+          id?: string;
+          program_id: string;
+          position: number;
+          activity_type: string;
+          delay_days?: number;
+          label?: string | null;
+        };
+        Update: {
+          id?: string;
+          program_id?: string;
+          position?: number;
+          activity_type?: string;
+          delay_days?: number;
+          label?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "program_steps_program_id_fkey";
+            columns: ["program_id"];
+            isOneToOne: false;
+            referencedRelation: "touch_point_programs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      contact_programs: {
+        Row: {
+          id: string;
+          contact_id: string;
+          program_id: string;
+          current_step_position: number;
+          started_at: string;
+          paused_at: string | null;
+          is_active: boolean;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          program_id: string;
+          current_step_position?: number;
+          started_at?: string;
+          paused_at?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          program_id?: string;
+          current_step_position?: number;
+          started_at?: string;
+          paused_at?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "contact_programs_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "contact_programs_program_id_fkey";
+            columns: ["program_id"];
+            isOneToOne: false;
+            referencedRelation: "touch_point_programs";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      touch_point_tasks: {
+        Row: {
+          id: string;
+          contact_id: string;
+          contact_program_id: string;
+          program_step_id: string;
+          activity_type: string;
+          due_date: string;
+          status: string;
+          completed_at: string | null;
+          skipped_at: string | null;
+          activity_id: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          contact_program_id: string;
+          program_step_id: string;
+          activity_type: string;
+          due_date: string;
+          status?: string;
+          completed_at?: string | null;
+          skipped_at?: string | null;
+          activity_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          contact_id?: string;
+          contact_program_id?: string;
+          program_step_id?: string;
+          activity_type?: string;
+          due_date?: string;
+          status?: string;
+          completed_at?: string | null;
+          skipped_at?: string | null;
+          activity_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "touch_point_tasks_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "touch_point_tasks_contact_program_id_fkey";
+            columns: ["contact_program_id"];
+            isOneToOne: false;
+            referencedRelation: "contact_programs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "touch_point_tasks_program_step_id_fkey";
+            columns: ["program_step_id"];
+            isOneToOne: false;
+            referencedRelation: "program_steps";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "touch_point_tasks_activity_id_fkey";
+            columns: ["activity_id"];
+            isOneToOne: false;
+            referencedRelation: "activities";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      enrichment_field_config: {
+        Row: {
+          id: string;
+          field_name: string;
+          display_name: string | null;
+          is_active: boolean;
+          provider_sources: string[] | null;
+          category: string | null;
+          display_order: number | null;
+        };
+        Insert: {
+          id?: string;
+          field_name: string;
+          display_name?: string | null;
+          is_active?: boolean;
+          provider_sources?: string[] | null;
+          category?: string | null;
+          display_order?: number | null;
+        };
+        Update: {
+          id?: string;
+          field_name?: string;
+          display_name?: string | null;
+          is_active?: boolean;
+          provider_sources?: string[] | null;
+          category?: string | null;
+          display_order?: number | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -863,3 +1384,13 @@ export type EnrichmentQueueItem = Database["public"]["Tables"]["enrichment_queue
 export type EnrichmentCreditBudget = Database["public"]["Tables"]["enrichment_credit_budgets"]["Row"];
 export type EnrichmentCache = Database["public"]["Tables"]["enrichment_cache"]["Row"];
 export type EnrichmentFieldProvenance = Database["public"]["Tables"]["enrichment_field_provenance"]["Row"];
+export type OpportunityStage = Database["public"]["Tables"]["opportunity_stages"]["Row"];
+export type Opportunity = Database["public"]["Tables"]["opportunities"]["Row"];
+export type OpportunityContact = Database["public"]["Tables"]["opportunity_contacts"]["Row"];
+export type OpportunityActivity = Database["public"]["Tables"]["opportunity_activities"]["Row"];
+export type PropertyTenant = Database["public"]["Tables"]["property_tenants"]["Row"];
+export type TouchPointProgram = Database["public"]["Tables"]["touch_point_programs"]["Row"];
+export type ProgramStep = Database["public"]["Tables"]["program_steps"]["Row"];
+export type ContactProgram = Database["public"]["Tables"]["contact_programs"]["Row"];
+export type TouchPointTask = Database["public"]["Tables"]["touch_point_tasks"]["Row"];
+export type EnrichmentFieldConfig = Database["public"]["Tables"]["enrichment_field_config"]["Row"];

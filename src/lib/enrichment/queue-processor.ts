@@ -8,6 +8,7 @@ import * as apollo from './providers/apollo';
 import * as pdl from './providers/pdl';
 import * as zerobounce from './providers/zerobounce';
 import * as brightdata from './providers/brightdata';
+import * as websearch from './providers/websearch';
 
 const BATCH_SIZE = 10;
 const RETRY_DELAYS = [60, 300, 900]; // 1min, 5min, 15min in seconds
@@ -245,6 +246,7 @@ function buildProviderParams(entity: Record<string, unknown>, entityType: string
       last_name: entity.last_name,
       email: entity.email,
       linkedin_url: entity.linkedin_url,
+      company_name: entity.company_name,
     };
   }
   return {
@@ -293,6 +295,14 @@ async function callProvider(
         return brightdata.enrichPerson(params);
       }
       return { provider: 'brightdata' as const, success: false, credits_used: 0, data: {}, cached: false };
+
+    case 'websearch':
+      return websearch.searchPerson({
+        first_name: params.first_name as string,
+        last_name: params.last_name as string,
+        company_name: params.company_name as string,
+        city: params.city as string,
+      });
 
     default:
       throw new Error(`Unknown provider: ${provider}`);

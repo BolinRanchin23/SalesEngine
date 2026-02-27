@@ -3,17 +3,31 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { checkBudget, consumeCredits } from '@/lib/enrichment/budget';
 import { buildCacheKey, checkCache, writeCache } from '@/lib/enrichment/cache';
 import { mergeContactData, writeProvenance, determineEnrichmentStatus } from '@/lib/enrichment/merge';
-import { ContactEnrichmentData, Provider } from '@/lib/enrichment/types';
+import { ContactEnrichmentData, Provider, EnrichmentDepth } from '@/lib/enrichment/types';
 import { BudgetExhaustedError } from '@/lib/enrichment/errors';
 import * as apollo from '@/lib/enrichment/providers/apollo';
 import * as pdl from '@/lib/enrichment/providers/pdl';
 import * as zerobounce from '@/lib/enrichment/providers/zerobounce';
 import * as brightdata from '@/lib/enrichment/providers/brightdata';
+import * as websearch from '@/lib/enrichment/providers/websearch';
 
 const STATUS_FIELDS = [
   'email', 'title', 'linkedin_url', 'bio', 'headshot_url',
   'work_phone', 'cell_phone', 'work_address',
 ];
+
+function getProvidersForDepth(depth: EnrichmentDepth): Provider[] {
+  switch (depth) {
+    case 'quick':
+      return ['apollo'];
+    case 'standard':
+      return ['apollo', 'pdl', 'brightdata', 'zerobounce'];
+    case 'deep':
+      return ['apollo', 'pdl', 'brightdata', 'zerobounce', 'websearch'];
+    default:
+      return ['apollo', 'pdl', 'brightdata', 'zerobounce'];
+  }
+}
 
 export async function POST(
   request: NextRequest,
@@ -22,7 +36,10 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json().catch(() => ({}));
-    const providers: Provider[] = body.providers || ['apollo'];
+    const depth = (body.depth as EnrichmentDepth) || undefined;
+    const providers: Provider[] = depth
+      ? getProvidersForDepth(depth)
+      : body.providers || ['apollo'];
 
     const supabase = createAdminClient();
     const { data: contact, error } = await supabase
@@ -39,11 +56,16 @@ export async function POST(
     const company = c.companies as Record<string, unknown> | null;
     const results = [];
 
+    // Update enrichment_depth on contact if specified
+    if (depth) {
+      await supabase.from('contacts').update({ enrichment_depth: depth }).eq('id', id);
+    }
+
     for (const provider of providers) {
       try {
         await checkBudget(provider, 1);
 
-        const params = {
+        const enrichParams = {
           first_name: c.first_name as string,
           last_name: c.last_name as string,
           email: c.email as string | undefined,
@@ -52,8 +74,12 @@ export async function POST(
           domain: company?.website ? new URL(company.website as string).hostname : undefined,
         };
 
-        const operation = provider === 'zerobounce' ? 'verify_email' : 'enrich_person';
-        const cacheKey = buildCacheKey(provider, operation as 'enrich_person' | 'verify_email', params as Record<string, unknown>);
+        const operation = provider === 'zerobounce'
+          ? 'verify_email'
+          : provider === 'websearch'
+            ? 'web_search'
+            : 'enrich_person';
+        const cacheKey = buildCacheKey(provider, operation as 'enrich_person' | 'verify_email', enrichParams as Record<string, unknown>);
         const cached = await checkCache(cacheKey);
 
         let data: Record<string, unknown>;
@@ -76,19 +102,41 @@ export async function POST(
             })
             .eq('id', id);
 
-          await writeCache(cacheKey, provider, 'verify_email', params as Record<string, unknown>, data);
+          await writeCache(cacheKey, provider, 'verify_email', enrichParams as Record<string, unknown>, data);
+        } else if (provider === 'websearch') {
+          const wsResult = await websearch.searchPerson({
+            first_name: c.first_name as string,
+            last_name: c.last_name as string,
+            company_name: company?.name as string | undefined,
+            city: (c.work_address as string)?.split(',')[0]?.trim(),
+          });
+          data = wsResult.data;
+          creditsUsed = wsResult.credits_used;
+
+          if (wsResult.success && Object.keys(data).length > 0) {
+            // Web research gets written directly (not through merge)
+            await supabase
+              .from('contacts')
+              .update({ web_research: data.web_research, last_enriched_at: new Date().toISOString() })
+              .eq('id', id);
+            await writeCache(cacheKey, provider, 'web_search', enrichParams as Record<string, unknown>, data);
+          }
+
+          results.push({ provider, success: wsResult.success, fields_updated: Object.keys(data) });
+          if (creditsUsed > 0) await consumeCredits(provider, creditsUsed);
+          continue;
         } else {
           const enrichFn = provider === 'apollo'
             ? apollo.enrichPerson
             : provider === 'brightdata'
               ? brightdata.enrichPerson
               : pdl.enrichPerson;
-          const result = await enrichFn(params);
+          const result = await enrichFn(enrichParams);
           data = result.data;
           creditsUsed = result.credits_used;
 
           if (result.success) {
-            await writeCache(cacheKey, provider, 'enrich_person', params as Record<string, unknown>, data);
+            await writeCache(cacheKey, provider, 'enrich_person', enrichParams as Record<string, unknown>, data);
           }
         }
 
@@ -97,7 +145,7 @@ export async function POST(
           contact_id: id,
           provider,
           request_type: operation,
-          request_payload: params as Record<string, unknown>,
+          request_payload: enrichParams as Record<string, unknown>,
           response_payload: data,
           status: 'success',
           credits_used: creditsUsed,
