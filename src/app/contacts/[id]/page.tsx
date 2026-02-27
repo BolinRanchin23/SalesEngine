@@ -166,14 +166,28 @@ export default async function ContactDetailPage({
           <div className={card}>
             <h2 className="text-lg font-semibold text-white mb-4">Contact Details</h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Email" value={c.email} />
+              <Field label="Email" value={c.email ? (
+                <span>
+                  {c.email}
+                  {c.email_status && (
+                    <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
+                      c.email_status === 'valid' ? 'bg-emerald-500/10 text-emerald-400' :
+                      c.email_status === 'invalid' ? 'bg-red-500/10 text-red-400' :
+                      'bg-yellow-500/10 text-yellow-400'
+                    }`}>{c.email_status}</span>
+                  )}
+                </span>
+              ) : null} />
               <Field label="Work Phone" value={c.work_phone} />
               <Field label="Cell Phone" value={c.cell_phone} />
-              <Field label="LinkedIn" value={c.linkedin_url ? <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">Profile</a> : null} />
+              <Field label="LinkedIn" value={c.linkedin_url ? <a href={c.linkedin_url.startsWith('http') ? c.linkedin_url : `https://${c.linkedin_url}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">Profile</a> : null} />
               <Field label="Work Address" value={c.work_address} />
               <Field label="Home Address" value={c.home_address} />
               <Field label="Delivery Address" value={c.delivery_address} />
               <Field label="Assigned To" value={c.assigned_to} />
+              {c.personal_emails && (c.personal_emails as string[]).length > 0 && (
+                <Field label="Personal Emails" value={(c.personal_emails as string[]).join(', ')} />
+              )}
             </dl>
           </div>
 
@@ -183,19 +197,19 @@ export default async function ContactDetailPage({
               <h2 className="text-lg font-semibold text-white mb-4">Social Profiles</h2>
               <div className="space-y-2">
                 {socialProfiles.twitter_url && (
-                  <a href={socialProfiles.twitter_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
+                  <a href={socialProfiles.twitter_url.startsWith('http') ? socialProfiles.twitter_url : `https://${socialProfiles.twitter_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
                     <span className="w-5 h-5 rounded bg-blue-500/20 flex items-center justify-center text-xs">X</span>
                     Twitter/X
                   </a>
                 )}
                 {socialProfiles.facebook_url && (
-                  <a href={socialProfiles.facebook_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
+                  <a href={socialProfiles.facebook_url.startsWith('http') ? socialProfiles.facebook_url : `https://${socialProfiles.facebook_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
                     <span className="w-5 h-5 rounded bg-blue-600/20 flex items-center justify-center text-xs">f</span>
                     Facebook
                   </a>
                 )}
                 {socialProfiles.github_url && (
-                  <a href={socialProfiles.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
+                  <a href={socialProfiles.github_url.startsWith('http') ? socialProfiles.github_url : `https://${socialProfiles.github_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300">
                     <span className="w-5 h-5 rounded bg-slate-600/40 flex items-center justify-center text-xs">G</span>
                     GitHub
                   </a>
@@ -236,8 +250,8 @@ export default async function ContactDetailPage({
                     <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-purple-400" />
                     <div>
                       <p className="text-sm font-medium text-slate-200">{edu.school?.name || edu.school || 'Unknown School'}</p>
-                      {edu.degrees && <p className="text-sm text-slate-400">{(edu.degrees as string[]).join(', ')}</p>}
-                      {edu.majors && <p className="text-sm text-slate-500">{(edu.majors as string[]).join(', ')}</p>}
+                      {edu.degrees && (edu.degrees as string[]).length > 0 && <p className="text-sm text-slate-400">{(edu.degrees as string[]).join(', ')}</p>}
+                      {edu.majors && (edu.majors as string[]).length > 0 && <p className="text-sm text-slate-500">{(edu.majors as string[]).join(', ')}</p>}
                       <p className="text-xs text-slate-500 mt-0.5">
                         {edu.start_date || '?'} &mdash; {edu.end_date || 'Present'}
                       </p>
@@ -335,7 +349,7 @@ export default async function ContactDetailPage({
                         <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
                           {item.title}
                         </a>
-                        {item.snippet && <p className="text-xs text-slate-500 mt-0.5">{item.snippet}</p>}
+                        {item.snippet && <p className="text-xs text-slate-500 mt-0.5">{(item.snippet as string).replace(/<[^>]*>/g, '')}</p>}
                       </div>
                     </div>
                   </div>
